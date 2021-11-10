@@ -1,4 +1,4 @@
-#1
+
 #include <Windows.h>
 #include <vector>
 #include <thread>
@@ -49,9 +49,9 @@ bool ChooseImageFilesToLoad(HWND _hwnd)
 	ofn.lStructSize = sizeof(OPENFILENAME);
 	ofn.hwndOwner = _hwnd;
 	ofn.lpstrFile = wsFileNames;
-	ofn.nMaxFile = MAX_FILES_TO_OPEN * 20 + MAX_PATH;  //The size, in charactesr of the buffer pointed to by lpstrFile. The buffer must be atleast 256(MAX_PATH) characters long; otherwise GetOpenFileName and 
+	ofn.nMaxFile = MAX_FILES_TO_OPEN * 20 + MAX_PATH;  //The size, in charactesr of the buffer pointed to by lpstrFile. The buffer must be atleast 256(MAX_PATH) characters long; otherwise GetOpenFileName and
 													   //GetSaveFileName functions return False
-													   // Set lpstrFile[0] to '\0' so that GetOpenFileName does not 
+													   // Set lpstrFile[0] to '\0' so that GetOpenFileName does not
 													   // use the contents of wsFileNames to initialize itself.
 	ofn.lpstrFile[0] = '\0';
 	ofn.lpstrFilter = L"Bitmap Images(.bmp)\0*.bmp\0"; //Filter for bitmap images
@@ -119,9 +119,9 @@ bool ChooseSoundFilesToLoad(HWND _hwnd)
 	ofn.lStructSize = sizeof(OPENFILENAME);
 	ofn.hwndOwner = _hwnd;
 	ofn.lpstrFile = wsFileNames;
-	ofn.nMaxFile = MAX_FILES_TO_OPEN * 20 + MAX_PATH;  //The size, in charactesr of the buffer pointed to by lpstrFile. The buffer must be atleast 256(MAX_PATH) characters long; otherwise GetOpenFileName and 
+	ofn.nMaxFile = MAX_FILES_TO_OPEN * 20 + MAX_PATH;  //The size, in charactesr of the buffer pointed to by lpstrFile. The buffer must be atleast 256(MAX_PATH) characters long; otherwise GetOpenFileName and
 													   //GetSaveFileName functions return False
-													   // Set lpstrFile[0] to '\0' so that GetOpenFileName does not 
+													   // Set lpstrFile[0] to '\0' so that GetOpenFileName does not
 													   // use the contents of wsFileNames to initialize itself.
 	ofn.lpstrFile[0] = '\0';
 	ofn.lpstrFilter = L"Wave Files (*.wav)\0*.wav\0All Files (*.*)\0*.*\0"; //Filter for wav files
@@ -131,7 +131,7 @@ bool ChooseSoundFilesToLoad(HWND _hwnd)
 	if (GetOpenFileName(&ofn) != 0) //user made a selection and pressed the OK button
 	{
 		//Extract the path name from the wide string -  two ways of doing it
-		//Second way: work with wide strings and a char pointer 
+		//Second way: work with wide strings and a char pointer
 
 		wstring _wstrPathName = ofn.lpstrFile;
 
@@ -314,7 +314,7 @@ LRESULT CALLBACK WindowProc(HWND _hwnd, UINT _uiMsg, WPARAM _wparam, LPARAM _lpa
 				ImageLoadTime = ImgCnt.c_str();
 
 				//																			posX, posY, width, height
-				_hwnd = CreateWindow(L"STATIC", ImageLoadTime, WS_VISIBLE | WS_CHILD | WS_BORDER, 20, 20, 600, 250, _hwnd, NULL, NULL, NULL);
+				_hwnd = CreateWindow(L"STATIC", ImageLoadTime, WS_VISIBLE | WS_CHILD | WS_BORDER, 20, 20, 600, 100, _hwnd, NULL, NULL, NULL);
 
 			}
 			else
