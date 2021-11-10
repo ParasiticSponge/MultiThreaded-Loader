@@ -1,4 +1,4 @@
-
+#1
 #include <Windows.h>
 #include <vector>
 #include <thread>
@@ -8,7 +8,7 @@
 #include "ThreadPool.h"
 #include <iostream>
 
-using std::cout;  
+using std::cout;
 using std::thread;   using std::vector;
 using std::wstring;  using std::mutex;
 
@@ -28,10 +28,7 @@ int threads;
 HINSTANCE g_hInstance;
 bool g_bIsFileLoaded = false;
 LPCWSTR ImageLoadTime, SoundLoadTime;
-
-std::wstring ImgLoad, SndLoad;
 std::wstring ImgCnt, SndCnt;
-
 HBITMAP LoaderFile;
 mutex g_Lock;
 
@@ -162,15 +159,28 @@ bool ChooseSoundFilesToLoad(HWND _hwnd)
 }
 
 std::mutex dataLock;
-void count(const int pLowerLimit, const int pUpperLimit, vector<wstring> g_FileNames, HWND _hwnd, std::wstring _StringLoad)
+void count(const int pLowerLimit, const int pUpperLimit, vector<wstring> g_FileNames, HWND _hwnd)
 {
-	g_Lock.lock();
-	for (int i = pLowerLimit; i < pUpperLimit; i++)
+	if (g_FileNames == g_vecImageFileNames) //check if images have been loaded
 	{
-		//output the contents of the vector to the HWND handler through the chosen string
-		_StringLoad = g_FileNames[i] + L"\n";
+		g_Lock.lock();
+		for (int i = pLowerLimit; i < pUpperLimit; i++)
+		{
+			//output the contents of the vector to the HWND handler
+			ImgCnt = g_FileNames[i] + L"\n";
+		}
+		g_Lock.unlock();
 	}
-	g_Lock.unlock();
+	if (g_FileNames == g_vecSoundFileNames) //check if sounds have been loaded
+	{
+		g_Lock.lock();
+		for (int i = pLowerLimit; i < pUpperLimit; i++)
+		{
+			//output the contents of the vector to the HWND handler
+			SndCnt = g_FileNames[i] + L"\n";
+		}
+		g_Lock.unlock();
+	}
 }
 
 void verifyThreads(vector<wstring> g_FileNames)
@@ -202,7 +212,7 @@ void verifyThreads(vector<wstring> g_FileNames)
 }
 
 //takes in imageFileNames or soundFileNames and processes into threads
-void countThr(vector<wstring> g_FileNames, HWND _hwnd, std::wstring _StringLoad)
+void countThr(vector<wstring> g_FileNames, HWND _hwnd)
 {
 	verifyThreads(g_FileNames);
 	int THREAD_COUNT = threads; //find the best number divided by the vector size
@@ -222,7 +232,7 @@ void countThr(vector<wstring> g_FileNames, HWND _hwnd, std::wstring _StringLoad)
 
 	for (int i = 0; i < THREAD_COUNT; i++) //from 0 to 5
 	{
-		*myThreads = thread(count, lowLimit, upperLimit, g_FileNames, _hwnd, _StringLoad); //from [0] to [1], with the chosen vector, the handler and the string being output to
+		*myThreads = thread(count, lowLimit, upperLimit, g_FileNames, _hwnd); //from [0] to [1]
 		myThreads->join();
 
 		//move onto the next thread
@@ -260,7 +270,7 @@ LRESULT CALLBACK WindowProc(HWND _hwnd, UINT _uiMsg, WPARAM _wparam, LPARAM _lpa
 
 		_hWindowDC = BeginPaint(_hwnd, &ps);
 		//Do all our painting here
-		
+
 		EndPaint(_hwnd, &ps);
 		return (0);
 	}
@@ -292,19 +302,15 @@ LRESULT CALLBACK WindowProc(HWND _hwnd, UINT _uiMsg, WPARAM _wparam, LPARAM _lpa
 
 				auto ImageLoadStart = std::chrono::high_resolution_clock::now();
 				//start threads based on number of files selected
-				countThr(g_vecImageFileNames, _hwnd, ImgCnt);
+				countThr(g_vecImageFileNames, _hwnd);
 				auto ImageLoadStop = std::chrono::high_resolution_clock::now();
-				//auto ImageLoadDuration = std::chrono::duration_cast<std::chrono::milliseconds>(ImageLoadStop - ImageLoadStart); //find difference
-				//
-				////add the output time below the image display
-				//ImgLoad = L"\n";
-				//ImgLoad += std::to_wstring(ImageLoadDuration.count());
-				//ImgLoad += L" ms to load images";
+				auto ImageLoadDuration = std::chrono::duration_cast<std::chrono::milliseconds>(ImageLoadStop - ImageLoadStart); //find difference
 
-				//ImgCnt += ImgLoad;
-				//if any sound have been loaded, add it to the string
-				//ImgCnt += SndLoad;
-
+				//add the output time below the image display
+				std::wstring OutTime = L"\n";
+				OutTime += std::to_wstring(ImageLoadDuration.count());
+				OutTime += L" ms to load images";
+				ImgCnt += OutTime;
 				ImageLoadTime = ImgCnt.c_str();
 
 				//																			posX, posY, width, height
@@ -340,23 +346,19 @@ LRESULT CALLBACK WindowProc(HWND _hwnd, UINT _uiMsg, WPARAM _wparam, LPARAM _lpa
 
 				auto SoundLoadStart = std::chrono::high_resolution_clock::now();
 				//start threads based on number of files selected
-				countThr(g_vecSoundFileNames, _hwnd, SndCnt);
+				countThr(g_vecSoundFileNames, _hwnd);
 				auto SoundLoadStop = std::chrono::high_resolution_clock::now();
 				auto SoundLoadDuration = std::chrono::duration_cast<std::chrono::milliseconds>(SoundLoadStop - SoundLoadStart); //find difference
 
 				//add the output time below the sound file display
-				SndLoad = L"\n";
-				SndLoad += std::to_wstring(SoundLoadDuration.count());
-				SndLoad += L" ms to load sounds";
-
-				SndCnt += SndLoad;
-				//if any images have been loaded, add it to the string
-				//SndCnt += ImgLoad;
-
-				SoundLoadTime = SndCnt.c_str();
+				std::wstring OutTime = L"\n";
+				OutTime += std::to_wstring(SoundLoadDuration.count());
+				OutTime += L" ms to load sounds";
+				SndCnt += OutTime;
+				SoundLoadTime = ImgCnt.c_str();
 
 				//																			posX, posY, width, height
-				_hwnd = CreateWindow(L"STATIC", ImageLoadTime, WS_VISIBLE | WS_CHILD | WS_BORDER, 20, 20, 600, 250, _hwnd, NULL, NULL, NULL);
+				_hwnd = CreateWindow(L"STATIC", SoundLoadTime, WS_VISIBLE | WS_CHILD | WS_BORDER, 20, 20, 600, 250, _hwnd, NULL, NULL, NULL);
 			}
 			else
 			{
