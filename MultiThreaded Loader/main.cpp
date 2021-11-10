@@ -28,7 +28,10 @@ int threads;
 HINSTANCE g_hInstance;
 bool g_bIsFileLoaded = false;
 LPCWSTR ImageLoadTime, SoundLoadTime;
+
+std::wstring ImgLoad, SndLoad;
 std::wstring ImgCnt, SndCnt;
+
 HBITMAP LoaderFile;
 mutex g_Lock;
 
@@ -159,13 +162,13 @@ bool ChooseSoundFilesToLoad(HWND _hwnd)
 }
 
 std::mutex dataLock;
-void count(const int pLowerLimit, const int pUpperLimit, vector<wstring> g_FileNames, HWND _hwnd)
+void count(const int pLowerLimit, const int pUpperLimit, vector<wstring> g_FileNames, HWND _hwnd, std::wstring _StringLoad)
 {
 	g_Lock.lock();
 	for (int i = pLowerLimit; i < pUpperLimit; i++)
 	{
-		//output the contents of the vector to the HWND handler
-		ImgCnt = g_FileNames[i] + L"\n";
+		//output the contents of the vector to the HWND handler through the chosen string
+		_StringLoad = g_FileNames[i] + L"\n";
 	}
 	g_Lock.unlock();
 }
@@ -199,7 +202,7 @@ void verifyThreads(vector<wstring> g_FileNames)
 }
 
 //takes in imageFileNames or soundFileNames and processes into threads
-void countThr(vector<wstring> g_FileNames, HWND _hwnd)
+void countThr(vector<wstring> g_FileNames, HWND _hwnd, std::wstring _StringLoad)
 {
 	verifyThreads(g_FileNames);
 	int THREAD_COUNT = threads; //find the best number divided by the vector size
@@ -219,7 +222,7 @@ void countThr(vector<wstring> g_FileNames, HWND _hwnd)
 
 	for (int i = 0; i < THREAD_COUNT; i++) //from 0 to 5
 	{
-		*myThreads = thread(count, lowLimit, upperLimit, g_FileNames, _hwnd); //from [0] to [1]
+		*myThreads = thread(count, lowLimit, upperLimit, g_FileNames, _hwnd, _StringLoad); //from [0] to [1], with the chosen vector, the handler and the string being output to
 		myThreads->join();
 
 		//move onto the next thread
@@ -289,15 +292,19 @@ LRESULT CALLBACK WindowProc(HWND _hwnd, UINT _uiMsg, WPARAM _wparam, LPARAM _lpa
 
 				auto ImageLoadStart = std::chrono::high_resolution_clock::now();
 				//start threads based on number of files selected
-				countThr(g_vecImageFileNames, _hwnd);
+				countThr(g_vecImageFileNames, _hwnd, ImgCnt);
 				auto ImageLoadStop = std::chrono::high_resolution_clock::now();
-				auto ImageLoadDuration = std::chrono::duration_cast<std::chrono::milliseconds>(ImageLoadStop - ImageLoadStart); //find difference
-				
-				//add the output time below the image display
-				std::wstring OutTime = L"\n";
-				OutTime += std::to_wstring(ImageLoadDuration.count());
-				OutTime += L" ms to load images";
-				ImgCnt += OutTime;
+				//auto ImageLoadDuration = std::chrono::duration_cast<std::chrono::milliseconds>(ImageLoadStop - ImageLoadStart); //find difference
+				//
+				////add the output time below the image display
+				//ImgLoad = L"\n";
+				//ImgLoad += std::to_wstring(ImageLoadDuration.count());
+				//ImgLoad += L" ms to load images";
+
+				//ImgCnt += ImgLoad;
+				//if any sound have been loaded, add it to the string
+				//ImgCnt += SndLoad;
+
 				ImageLoadTime = ImgCnt.c_str();
 
 				//																			posX, posY, width, height
@@ -333,16 +340,20 @@ LRESULT CALLBACK WindowProc(HWND _hwnd, UINT _uiMsg, WPARAM _wparam, LPARAM _lpa
 
 				auto SoundLoadStart = std::chrono::high_resolution_clock::now();
 				//start threads based on number of files selected
-				countThr(g_vecSoundFileNames, _hwnd);
+				countThr(g_vecSoundFileNames, _hwnd, SndCnt);
 				auto SoundLoadStop = std::chrono::high_resolution_clock::now();
 				auto SoundLoadDuration = std::chrono::duration_cast<std::chrono::milliseconds>(SoundLoadStop - SoundLoadStart); //find difference
 
 				//add the output time below the sound file display
-				std::wstring OutTime = L"\n";
-				OutTime += std::to_wstring(SoundLoadDuration.count());
-				OutTime += L" ms to load sounds";
-				ImgCnt += OutTime;
-				ImageLoadTime = ImgCnt.c_str();
+				SndLoad = L"\n";
+				SndLoad += std::to_wstring(SoundLoadDuration.count());
+				SndLoad += L" ms to load sounds";
+
+				SndCnt += SndLoad;
+				//if any images have been loaded, add it to the string
+				//SndCnt += ImgLoad;
+
+				SoundLoadTime = SndCnt.c_str();
 
 				//																			posX, posY, width, height
 				_hwnd = CreateWindow(L"STATIC", ImageLoadTime, WS_VISIBLE | WS_CHILD | WS_BORDER, 20, 20, 600, 250, _hwnd, NULL, NULL, NULL);
