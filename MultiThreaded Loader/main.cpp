@@ -316,7 +316,36 @@ LRESULT CALLBACK WindowProc(HWND _hwnd, UINT _uiMsg, WPARAM _wparam, LPARAM _lpa
 		{
 			if (ChooseSoundFilesToLoad(_hwnd))
 			{
-				//Write code here to create multiple threads to load sound files in parallel
+				//if 1 image is selected
+				if (g_vecSoundFileNames.size() == 1)
+				{
+					MessageBox(_hwnd, L"Image Selected", L"Message", MB_OK);
+				}
+				//if multiple are selected
+				if (g_vecSoundFileNames.size() > 1)
+				{
+					MessageBox(_hwnd, L" Multiple Images Selected", L"Notification", MB_DEFBUTTON4);
+				}
+				if (g_vecSoundFileNames.size() > MAX_FILES_TO_OPEN)
+				{
+					g_vecSoundFileNames.resize(MAX_FILES_TO_OPEN);
+				}
+
+				auto SoundLoadStart = std::chrono::high_resolution_clock::now();
+				//start threads based on number of files selected
+				countThr(g_vecSoundFileNames, _hwnd);
+				auto SoundLoadStop = std::chrono::high_resolution_clock::now();
+				auto SoundLoadDuration = std::chrono::duration_cast<std::chrono::milliseconds>(SoundLoadStop - SoundLoadStart); //find difference
+
+				//add the output time below the sound file display
+				std::wstring OutTime = L"\n";
+				OutTime += std::to_wstring(SoundLoadDuration.count());
+				OutTime += L" ms to load sounds";
+				ImgCnt += OutTime;
+				ImageLoadTime = ImgCnt.c_str();
+
+				//																			posX, posY, width, height
+				_hwnd = CreateWindow(L"STATIC", ImageLoadTime, WS_VISIBLE | WS_CHILD | WS_BORDER, 20, 20, 600, 250, _hwnd, NULL, NULL, NULL);
 			}
 			else
 			{
