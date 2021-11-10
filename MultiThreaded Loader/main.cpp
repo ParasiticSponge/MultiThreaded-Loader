@@ -218,7 +218,8 @@ LRESULT CALLBACK WindowProc(HWND _hwnd, UINT _uiMsg, WPARAM _wparam, LPARAM _lpa
 		{
 			if (ChooseImageFilesToLoad(_hwnd))
 			{
-				/*auto ImageLoadStart = std::chrono::high_resolution_clock::now();*/
+				auto ImageLoadStart = std::chrono::high_resolution_clock::now();
+
 				//Write code here to create multiple threads to load image files in parallel
 				//start threads based on number of files selected
 
@@ -243,8 +244,12 @@ LRESULT CALLBACK WindowProc(HWND _hwnd, UINT _uiMsg, WPARAM _wparam, LPARAM _lpa
 
 				}
 
-				/*auto ImageLoadStop = std::chrono::high_resolution_clock::now();
-				auto ImageLoadTime = std::chrono::duration_cast<std::chrono::milliseconds>(ImageLoadStart - ImageLoadStop);*/
+				auto ImageLoadStop = std::chrono::high_resolution_clock::now();
+				auto ImageLoadTime = std::chrono::duration_cast<std::chrono::milliseconds>(ImageLoadStart - ImageLoadStop);
+
+				std::wstring Out = std::to_wstring(ImageLoadTime.count());
+				Out += L" ms to load images";
+
 			}
 			else
 			{
@@ -338,7 +343,8 @@ void count(const int pLowerLimit, const int pUpperLimit, vector<wstring> g_FileN
 	g_Lock.lock();
 	for (int i = pLowerLimit; i < pUpperLimit; i++)
 	{
-		cout << g_FileNames[i] << "\n";
+		std::wstring Out = g_FileNames[i];
+		Out += L"\n";
 	}
 	g_Lock.unlock();
 }
