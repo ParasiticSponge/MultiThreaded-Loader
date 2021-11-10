@@ -1,3 +1,12 @@
+//----------------------------------------------------------------------------------------------------
+//Program: CAO107 Assessment 2.
+//@ Author : Samantha Stevens
+// 
+// 
+//github repositories
+//https://github.com/RadioactiveMint/MultiThreaded-Loader.git
+//https://github.com/RadioactiveMint/Thread_Count_using_vectors.git
+//----------------------------------------------------------------------------------------------------
 
 #include <Windows.h>
 #include <vector>
@@ -28,7 +37,7 @@ int threads;
 HINSTANCE g_hInstance;
 bool g_bIsFileLoaded = false;
 LPCWSTR ImageLoadTime, SoundLoadTime;
-std::wstring ImgCnt, SndCnt;
+std::wstring ImgCnt;
 HBITMAP LoaderFile;
 mutex g_Lock;
 
@@ -159,30 +168,20 @@ bool ChooseSoundFilesToLoad(HWND _hwnd)
 }
 
 std::mutex dataLock;
+
+//distributes the number of images / sounds selected amongst the threads
 void count(const int pLowerLimit, const int pUpperLimit, vector<wstring> g_FileNames, HWND _hwnd)
 {
-	if (g_FileNames == g_vecImageFileNames) //check if images have been loaded
+	g_Lock.lock();
+	for (int i = pLowerLimit; i < pUpperLimit; i++)
 	{
-		g_Lock.lock();
-		for (int i = pLowerLimit; i < pUpperLimit; i++)
-		{
-			//output the contents of the vector to the HWND handler
-			ImgCnt = g_FileNames[i] + L"\n";
-		}
-		g_Lock.unlock();
+		//output the contents of the vector to the HWND handler
+		ImgCnt = g_FileNames[i] + L"\n";
 	}
-	if (g_FileNames == g_vecSoundFileNames) //check if sounds have been loaded
-	{
-		g_Lock.lock();
-		for (int i = pLowerLimit; i < pUpperLimit; i++)
-		{
-			//output the contents of the vector to the HWND handler
-			SndCnt = g_FileNames[i] + L"\n";
-		}
-		g_Lock.unlock();
-	}
+	g_Lock.unlock();
 }
 
+//creates the number of threads based on the number factors of the number of files selected
 void verifyThreads(vector<wstring> g_FileNames)
 {
 	if (g_FileNames.size() == 1 || g_FileNames.size() == 2) //the number is even
@@ -354,11 +353,11 @@ LRESULT CALLBACK WindowProc(HWND _hwnd, UINT _uiMsg, WPARAM _wparam, LPARAM _lpa
 				std::wstring OutTime = L"\n";
 				OutTime += std::to_wstring(SoundLoadDuration.count());
 				OutTime += L" ms to load sounds";
-				SndCnt += OutTime;
+				ImgCnt += OutTime;
 				SoundLoadTime = ImgCnt.c_str();
 
 				//																			posX, posY, width, height
-				_hwnd = CreateWindow(L"STATIC", SoundLoadTime, WS_VISIBLE | WS_CHILD | WS_BORDER, 20, 20, 600, 250, _hwnd, NULL, NULL, NULL);
+				_hwnd = CreateWindow(L"STATIC", SoundLoadTime, WS_VISIBLE | WS_CHILD | WS_BORDER, 20, 150, 600, 100, _hwnd, NULL, NULL, NULL);
 			}
 			else
 			{
