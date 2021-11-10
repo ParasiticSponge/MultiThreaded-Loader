@@ -27,7 +27,7 @@ int threads;
 
 HINSTANCE g_hInstance;
 bool g_bIsFileLoaded = false;
-LPCWSTR ImageLoadTime, SoundLoadTime;
+LPCWSTR ImageLoadTime, SoundLoadTime, ImageContents, SoundContents;
 HBITMAP LoaderFile;
 mutex g_Lock;
 
@@ -158,13 +158,15 @@ bool ChooseSoundFilesToLoad(HWND _hwnd)
 }
 
 std::mutex dataLock;
-void count(const int pLowerLimit, const int pUpperLimit, vector<wstring> g_FileNames)
+void count(const int pLowerLimit, const int pUpperLimit, vector<wstring> g_FileNames, HWND _hwnd)
 {
 	g_Lock.lock();
 	for (int i = pLowerLimit; i < pUpperLimit; i++)
 	{
+		//output the contents of the vector to the HWND handler
 		std::wstring Out = g_FileNames[i];
 		Out += L"\n";
+		ImageContents = Out.c_str();
 	}
 	g_Lock.unlock();
 }
@@ -198,7 +200,7 @@ void verifyThreads(vector<wstring> g_FileNames)
 }
 
 //takes in imageFileNames or soundFileNames and processes into threads
-void countThr(vector<wstring> g_FileNames)
+void countThr(vector<wstring> g_FileNames, HWND _hwnd)
 {
 	verifyThreads(g_FileNames);
 	int THREAD_COUNT = threads; //find the best number divided by the vector size
@@ -218,7 +220,7 @@ void countThr(vector<wstring> g_FileNames)
 
 	for (int i = 0; i < THREAD_COUNT; i++) //from 0 to 5
 	{
-		*myThreads = thread(count, lowLimit, upperLimit, g_FileNames); //from [0] to [1]
+		*myThreads = thread(count, lowLimit, upperLimit, g_FileNames, _hwnd); //from [0] to [1]
 		myThreads->join();
 
 		//move onto the next thread
@@ -256,12 +258,6 @@ LRESULT CALLBACK WindowProc(HWND _hwnd, UINT _uiMsg, WPARAM _wparam, LPARAM _lpa
 
 		_hWindowDC = BeginPaint(_hwnd, &ps);
 		//Do all our painting here
-
-		//moves a line
-		/*MoveToEx(_hWindowDC, 0, 0, NULL);
-		LineTo(_hWindowDC, 50, 50);*/
-		//https://www.informit.com/articles/article.aspx?p=328647&seqNum=3
-
 		
 		EndPaint(_hwnd, &ps);
 		return (0);
@@ -294,12 +290,19 @@ LRESULT CALLBACK WindowProc(HWND _hwnd, UINT _uiMsg, WPARAM _wparam, LPARAM _lpa
 
 				auto ImageLoadStart = std::chrono::high_resolution_clock::now();
 				//start threads based on number of files selected
-				countThr(g_vecImageFileNames);
+				countThr(g_vecImageFileNames, _hwnd);
 				auto ImageLoadStop = std::chrono::high_resolution_clock::now();
-				auto ImageLoadTime = std::chrono::duration_cast<std::chrono::milliseconds>(ImageLoadStart - ImageLoadStop);
+				auto ImageLoadDuration = std::chrono::duration_cast<std::chrono::milliseconds>(ImageLoadStop - ImageLoadStart); //find difference
+				
+				//																			posX, posY, width, height
+				_hwnd = CreateWindow(L"STATIC", ImageContents , WS_VISIBLE | WS_CHILD | WS_BORDER, 20, 20, 400, 25, _hwnd, NULL, NULL, NULL);
 
-				std::wstring Out = std::to_wstring(ImageLoadTime.count());
-				Out += L" ms to load images";
+				////add the output time below the image display
+				//std::wstring OutTime = L"\n";
+				//OutTime += std::to_wstring(ImageLoadDuration.count());
+				//OutTime += L" ms to load images";
+				//ImageLoadTime = OutTime.c_str();
+				//_hwnd = CreateWindow(L"STATIC", ImageLoadTime, WS_VISIBLE | WS_CHILD | WS_BORDER, 20, 50, 300, 100, _hwnd, NULL, NULL, NULL);
 
 			}
 			else
