@@ -27,7 +27,8 @@ int threads;
 
 HINSTANCE g_hInstance;
 bool g_bIsFileLoaded = false;
-LPCWSTR ImageLoadTime, SoundLoadTime, ImageContents, SoundContents;
+LPCWSTR ImageLoadTime, SoundLoadTime;
+std::wstring ImgCnt, SndCnt;
 HBITMAP LoaderFile;
 mutex g_Lock;
 
@@ -164,9 +165,7 @@ void count(const int pLowerLimit, const int pUpperLimit, vector<wstring> g_FileN
 	for (int i = pLowerLimit; i < pUpperLimit; i++)
 	{
 		//output the contents of the vector to the HWND handler
-		std::wstring Out = g_FileNames[i];
-		Out += L"\n";
-		ImageContents = Out.c_str();
+		ImgCnt = g_FileNames[i] + L"\n";
 	}
 	g_Lock.unlock();
 }
@@ -294,15 +293,15 @@ LRESULT CALLBACK WindowProc(HWND _hwnd, UINT _uiMsg, WPARAM _wparam, LPARAM _lpa
 				auto ImageLoadStop = std::chrono::high_resolution_clock::now();
 				auto ImageLoadDuration = std::chrono::duration_cast<std::chrono::milliseconds>(ImageLoadStop - ImageLoadStart); //find difference
 				
-				//																			posX, posY, width, height
-				_hwnd = CreateWindow(L"STATIC", ImageContents , WS_VISIBLE | WS_CHILD | WS_BORDER, 20, 20, 400, 25, _hwnd, NULL, NULL, NULL);
+				//add the output time below the image display
+				std::wstring OutTime = L"\n";
+				OutTime += std::to_wstring(ImageLoadDuration.count());
+				OutTime += L" ms to load images";
+				ImgCnt += OutTime;
+				ImageLoadTime = ImgCnt.c_str();
 
-				////add the output time below the image display
-				//std::wstring OutTime = L"\n";
-				//OutTime += std::to_wstring(ImageLoadDuration.count());
-				//OutTime += L" ms to load images";
-				//ImageLoadTime = OutTime.c_str();
-				//_hwnd = CreateWindow(L"STATIC", ImageLoadTime, WS_VISIBLE | WS_CHILD | WS_BORDER, 20, 50, 300, 100, _hwnd, NULL, NULL, NULL);
+				//																			posX, posY, width, height
+				_hwnd = CreateWindow(L"STATIC", ImageLoadTime, WS_VISIBLE | WS_CHILD | WS_BORDER, 20, 20, 600, 250, _hwnd, NULL, NULL, NULL);
 
 			}
 			else
