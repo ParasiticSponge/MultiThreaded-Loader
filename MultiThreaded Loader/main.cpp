@@ -157,18 +157,80 @@ bool ChooseSoundFilesToLoad(HWND _hwnd)
 
 }
 
-void ImageLoad(int ImageNo)
+std::mutex dataLock;
+void count(const int pLowerLimit, const int pUpperLimit, vector<wstring> g_FileNames)
 {
 	g_Lock.lock();
-	LoaderFile = (HBITMAP)LoadImageW(NULL, (LPCWSTR)g_vecImageFileNames[ImageNo].c_str(), IMAGE_BITMAP, 100, 100, LR_LOADFROMFILE);
+	for (int i = pLowerLimit; i < pUpperLimit; i++)
+	{
+		std::wstring Out = g_FileNames[i];
+		Out += L"\n";
+	}
+	g_Lock.unlock();
 }
 
-//void SoundLoad(int SoundNo)
-//{
-//	g_Lock.lock();
-//	PlaySound((LPCWSTR)g_vecSoundFileNames[SoundNo].c_str(), NULL, SND_FILENAME | SND_ASYNC);
-//	g_Lock.unlock();
-//}
+void verifyThreads(vector<wstring> g_FileNames)
+{
+	if (g_FileNames.size() == 1 || g_FileNames.size() == 2) //the number is even
+	{
+		threads = 1;
+	}
+	else if (g_FileNames.size() % 2 == 0) //the number is even
+		for (int i = 2; i < MAX_FILES_TO_OPEN; i++) //avoid dividing the number by 1, continue up from 2
+		{
+			//if the remainder of a number divided by the thread size is 0
+			//also making sure it doesn't divide by itself, or by 2
+			if (g_FileNames.size() % i == 0 && i != g_FileNames.size() && i != g_FileNames.size() / 2)
+			{
+				threads = i;
+				cout << threads << "\n\n";
+			}
+		}
+	else if (g_FileNames.size() % 2 > 0) //if the number is odd
+		for (int i = 1; i < MAX_FILES_TO_OPEN; i++) //start from 1
+		{
+			//if the remainder of a number divided by the thread size is 0
+			//also making sure it doesn't divide by itself, or by 2
+			if (g_FileNames.size() % i == 0 && i != g_FileNames.size() && i != g_FileNames.size() / 2)
+			{
+				threads = i;
+				cout << threads << "\n\n";
+			}
+		}
+}
+
+//takes in imageFileNames or soundFileNames and processes into threads
+void countThr(vector<wstring> g_FileNames)
+{
+	verifyThreads(g_FileNames);
+	int THREAD_COUNT = threads; //find the best number divided by the vector size
+	//cout << "There are " << THREAD_COUNT << " files per thread count\n";
+
+	//thread myThreads[5]; //make 5 threads
+	thread* myThreads = new thread[THREAD_COUNT];
+
+	int lowLimit = 0;
+
+	//upperLimit = 2
+	//upper limit is how many values should be stored in each thread, evenly distributed between threads.
+	int upperLimit = g_FileNames.size() / threads;
+
+	//keep a variable that stores the count of each thread to increase by after each iteration of the loop
+	const int increasingLimit = upperLimit;
+
+	for (int i = 0; i < THREAD_COUNT; i++) //from 0 to 5
+	{
+		*myThreads = thread(count, lowLimit, upperLimit, g_FileNames); //from [0] to [1]
+		cout << "\n\n";
+		myThreads->join();
+
+		//move onto the next thread
+		myThreads++;
+
+		lowLimit += increasingLimit; //add to lowerLimit
+		upperLimit += increasingLimit; //add to upperLimit
+	}
+}
 
 LRESULT CALLBACK WindowProc(HWND _hwnd, UINT _uiMsg, WPARAM _wparam, LPARAM _lparam)
 {
@@ -218,11 +280,6 @@ LRESULT CALLBACK WindowProc(HWND _hwnd, UINT _uiMsg, WPARAM _wparam, LPARAM _lpa
 		{
 			if (ChooseImageFilesToLoad(_hwnd))
 			{
-				auto ImageLoadStart = std::chrono::high_resolution_clock::now();
-
-				//Write code here to create multiple threads to load image files in parallel
-				//start threads based on number of files selected
-
 				//if 1 image is selected
 				if (g_vecImageFileNames.size() == 1)
 				{
@@ -238,12 +295,9 @@ LRESULT CALLBACK WindowProc(HWND _hwnd, UINT _uiMsg, WPARAM _wparam, LPARAM _lpa
 					g_vecImageFileNames.resize(MAX_FILES_TO_OPEN);
 				}
 
-
-				for (int i = 0; i < g_vecImageFileNames.size(); i++)
-				{
-
-				}
-
+				auto ImageLoadStart = std::chrono::high_resolution_clock::now();
+				//start threads based on number of files selected
+				countThr(g_vecImageFileNames);
 				auto ImageLoadStop = std::chrono::high_resolution_clock::now();
 				auto ImageLoadTime = std::chrono::duration_cast<std::chrono::milliseconds>(ImageLoadStart - ImageLoadStop);
 
@@ -335,77 +389,6 @@ HWND CreateAndRegisterWindow(HINSTANCE _hInstance)
 		NULL);                  // Extra creation parameters.
 
 	return hwnd;
-}
-
-std::mutex dataLock;
-void count(const int pLowerLimit, const int pUpperLimit, vector<wstring> g_FileNames)
-{
-	g_Lock.lock();
-	for (int i = pLowerLimit; i < pUpperLimit; i++)
-	{
-		std::wstring Out = g_FileNames[i];
-		Out += L"\n";
-	}
-	g_Lock.unlock();
-}
-
-void verifyThreads(vector<wstring> g_FileNames)
-{
-	if (g_FileNames.size() % 2 == 0) //the number is even
-		for (int i = 2; i < MAX_FILES_TO_OPEN; i++) //avoid dividing the number by 1, continue up from 2
-		{
-			//if the remainder of a number divided by the thread size is 0
-			//also making sure it doesn't divide by itself, or by 2
-			if (g_FileNames.size() % i == 0 && i != g_FileNames.size() && i != g_FileNames.size() / 2)
-			{
-				threads = i;
-				cout << threads << "\n\n";
-			}
-		}
-	else if (g_FileNames.size() % 2 > 0) //if the number is odd
-		for (int i = 1; i < MAX_FILES_TO_OPEN; i++) //start from 1
-		{
-			//if the remainder of a number divided by the thread size is 0
-			//also making sure it doesn't divide by itself, or by 2
-			if (g_FileNames.size() % i == 0 && i != g_FileNames.size() && i != g_FileNames.size() / 2)
-			{
-				threads = i;
-				cout << threads << "\n\n";
-			}
-		}
-}
-
-//takes in imageFileNames or soundFileNames and processes into threads
-void countThr(vector<wstring> g_FileNames)
-{
-	verifyThreads(g_FileNames);
-	int THREAD_COUNT = threads; //find the best number divided by the vector size
-	//cout << "There are " << THREAD_COUNT << " files per thread count\n";
-
-	//thread myThreads[5]; //make 5 threads
-	thread* myThreads = new thread[THREAD_COUNT];
-
-	int lowLimit = 0;
-
-	//upperLimit = 2
-	//upper limit is how many values should be stored in each thread, evenly distributed between threads.
-	int upperLimit = g_FileNames.size() / threads;
-
-	//keep a variable that stores the count of each thread to increase by after each iteration of the loop
-	const int increasingLimit = upperLimit;
-
-	for (int i = 0; i < THREAD_COUNT; i++) //from 0 to 5
-	{
-		*myThreads = thread(count, lowLimit, upperLimit, g_FileNames); //from [0] to [1]
-		cout << "\n\n";
-		myThreads->join();
-
-		//move onto the next thread
-		myThreads++;
-
-		lowLimit += increasingLimit; //add 2 to lowerLimit
-		upperLimit += increasingLimit; //add 2 to upperLimit
-	}
 }
 
 int WINAPI WinMain(HINSTANCE _hInstance, HINSTANCE _hPrevInstance, LPSTR _lpCmdLine, int _nCmdShow)
