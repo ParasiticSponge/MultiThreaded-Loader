@@ -349,7 +349,7 @@ void count(const int pLowerLimit, const int pUpperLimit)
 	g_Lock.lock();
 	for (int i = pLowerLimit; i < pUpperLimit; i++)
 	{
-		cout << threads[i] << "\n";
+		cout << imageFiles[i] << "\n";
 	}
 	g_Lock.unlock();
 }
@@ -357,25 +357,42 @@ void count(const int pLowerLimit, const int pUpperLimit)
 void countThr()
 {
 	int maxNum = 50;
-	for (int i = 2; i < maxNum; i++) //avoid dividing the number by 1 and itself, continue up from 2
-		if (threads.size() % i == 0)
-			countFactor = i;
-		else
-			countFactor = threads.size();
+	for (int i = 2; i < maxNum; i++) //avoid dividing the number by 1, continue up from 2
+		//if the remainder of a number divided by the thread size is 0
+		//also making sure it doesn't divide by itself
+		if (imageFiles.size() % i == 0 && i != imageFiles.size())
+		{
+			threads = i;
+		}
+	/*else
+		threads = imageFiles.size();*/
 
-	int THREAD_COUNT = threads.size() / countFactor; //find the best thread divisor
+	int THREAD_COUNT = threads; //find the best number divided by the vector size
+	//cout << "There are " << THREAD_COUNT << " files per thread count\n";
+
+	//thread myThreads[5]; //make 5 threads
 	thread* myThreads = new thread[THREAD_COUNT];
-	int lowLimit = 0; //good
-	int upperLimit = THREAD_COUNT;
 
-	for (int i = 0; i < THREAD_COUNT; i++) //from 0 to thread divisor
+	int lowLimit = 0;
+
+	//upperLimit = 2
+	//upper limit is how many values should be stored in each thread, evenly distributed between threads.
+	int upperLimit = imageFiles.size() / threads;
+
+	//keep a variable that stores the count of each thread to increase by after each iteration of the loop
+	const int increasingLimit = upperLimit;
+
+	for (int i = 0; i < THREAD_COUNT; i++) //from 0 to 5
 	{
-		*myThreads = thread(count, lowLimit, upperLimit); //from 0 
+		*myThreads = thread(count, lowLimit, upperLimit); //from [0] to [1]
+		cout << "\n\n";
 		myThreads->join();
 
+		//move onto the next thread
 		myThreads++;
-		lowLimit += THREAD_COUNT;
-		upperLimit += THREAD_COUNT;
+
+		lowLimit += increasingLimit; //add 2 to lowerLimit
+		upperLimit += increasingLimit; //add 2 to upperLimit
 	}
 }
 
