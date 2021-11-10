@@ -1,3 +1,7 @@
+//github repositories
+//https://github.com/RadioactiveMint/MultiThreaded-Loader.git
+//https://github.com/RadioactiveMint/Thread_Count_using_vectors.git
+
 #include <Windows.h>
 #include <vector>
 #include <thread>
@@ -158,6 +162,7 @@ bool ChooseSoundFilesToLoad(HWND _hwnd)
 }
 
 std::mutex dataLock;
+//performs the task of producing the threads each iteration
 void count(const int pLowerLimit, const int pUpperLimit, vector<wstring> g_FileNames, HWND _hwnd)
 {
 	g_Lock.lock();
@@ -169,8 +174,10 @@ void count(const int pLowerLimit, const int pUpperLimit, vector<wstring> g_FileN
 	g_Lock.unlock();
 }
 
+//checks the number of files selected and divides it among threads based on factors of the number
 void verifyThreads(vector<wstring> g_FileNames)
 {
+	//if the number of files submitted is 1 or 2, just initialise 1 thread
 	if (g_FileNames.size() == 1 || g_FileNames.size() == 2) //the number is even
 	{
 		threads = 1;
@@ -190,7 +197,7 @@ void verifyThreads(vector<wstring> g_FileNames)
 		{
 			//if the remainder of a number divided by the thread size is 0
 			//also making sure it doesn't divide by itself, or by 2
-			if (g_FileNames.size() % i == 0 && i != g_FileNames.size() && i != g_FileNames.size() / 2)
+			if (g_FileNames.size() % i == 0 && i != g_FileNames.size())
 			{
 				threads = i;
 			}
@@ -220,7 +227,6 @@ void countThr(vector<wstring> g_FileNames, HWND _hwnd)
 	{
 		*myThreads = thread(count, lowLimit, upperLimit, g_FileNames, _hwnd); //from [0] to [1]
 		myThreads->join();
-
 		//move onto the next thread
 		myThreads++;
 
@@ -287,8 +293,10 @@ LRESULT CALLBACK WindowProc(HWND _hwnd, UINT _uiMsg, WPARAM _wparam, LPARAM _lpa
 				}
 
 				auto ImageLoadStart = std::chrono::high_resolution_clock::now();
+
 				//start threads based on number of files selected
 				countThr(g_vecImageFileNames, _hwnd);
+
 				auto ImageLoadStop = std::chrono::high_resolution_clock::now();
 				auto ImageLoadDuration = std::chrono::duration_cast<std::chrono::milliseconds>(ImageLoadStop - ImageLoadStart); //find difference
 
@@ -331,8 +339,10 @@ LRESULT CALLBACK WindowProc(HWND _hwnd, UINT _uiMsg, WPARAM _wparam, LPARAM _lpa
 				}
 
 				auto SoundLoadStart = std::chrono::high_resolution_clock::now();
+
 				//start threads based on number of files selected
 				countThr(g_vecSoundFileNames, _hwnd);
+
 				auto SoundLoadStop = std::chrono::high_resolution_clock::now();
 				auto SoundLoadDuration = std::chrono::duration_cast<std::chrono::milliseconds>(SoundLoadStop - SoundLoadStart); //find difference
 
