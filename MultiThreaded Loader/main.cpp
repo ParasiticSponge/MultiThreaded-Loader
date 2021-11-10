@@ -8,11 +8,9 @@
 #include "ThreadPool.h"
 #include <iostream>
 
-using std::cout;
-using std::thread;
-using std::vector;
-using std::wstring;
-using std::mutex;
+using std::cout;  
+using std::thread;   using std::vector;
+using std::wstring;  using std::mutex;
 
 #define WINDOW_CLASS_NAME L"MultiThreaded Loader Tool"
 const unsigned int _kuiWINDOWWIDTH = 1200;
@@ -23,8 +21,10 @@ const unsigned int _kuiWINDOWHEIGHT = 1200;
 //Global Variables
 vector<wstring> g_vecImageFileNames;
 vector<wstring> g_vecSoundFileNames;
-vector<std::thread> ThreadPool;
 vector<HWND> ImageWindows;
+
+vector<int> threads;
+int countFactor;
 
 HINSTANCE g_hInstance;
 bool g_bIsFileLoaded = false;
@@ -344,24 +344,39 @@ void count(const int pLowerLimit, const int pUpperLimit)
 	//dataLock.unlock();
 }
 
+void count(const int pLowerLimit, const int pUpperLimit)
+{
+	g_Lock.lock();
+	for (int i = pLowerLimit; i < pUpperLimit; i++)
+	{
+		cout << threads[i] << "\n";
+	}
+	g_Lock.unlock();
+}
+
 void countThr()
 {
-	const int THREAD_COUNT = 10;
-	int numberCount = 100;
+	int maxNum = 50;
+	for (int i = 2; i < maxNum; i++) //avoid dividing the number by 1 and itself, continue up from 2
+		if (threads.size() % i == 0)
+			countFactor = i;
+		else
+			countFactor = threads.size();
+
+	int THREAD_COUNT = threads.size() / countFactor; //find the best thread divisor
 	thread* myThreads = new thread[THREAD_COUNT];
-	int lowLimit = 0;
+	int lowLimit = 0; //good
 	int upperLimit = THREAD_COUNT;
-	for (int i = 0; i < THREAD_COUNT; i++)
+
+	for (int i = 0; i < THREAD_COUNT; i++) //from 0 to thread divisor
 	{
-		*myThreads = thread(count, lowLimit, upperLimit);
+		*myThreads = thread(count, lowLimit, upperLimit); //from 0 
 		myThreads->join();
+
 		myThreads++;
-		//auto lowerUpperLimit = []{
-		//  //lowLimit = 10;//};
 		lowLimit += THREAD_COUNT;
 		upperLimit += THREAD_COUNT;
 	}
-	delete[] myThreads;
 }
 
 int WINAPI WinMain(HINSTANCE _hInstance, HINSTANCE _hPrevInstance, LPSTR _lpCmdLine, int _nCmdShow)
