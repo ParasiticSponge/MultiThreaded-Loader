@@ -160,26 +160,13 @@ bool ChooseSoundFilesToLoad(HWND _hwnd)
 std::mutex dataLock;
 void count(const int pLowerLimit, const int pUpperLimit, vector<wstring> g_FileNames, HWND _hwnd)
 {
-	if (g_FileNames == g_vecImageFileNames) //check if images have been loaded
+	g_Lock.lock();
+	for (int i = pLowerLimit; i < pUpperLimit; i++)
 	{
-		g_Lock.lock();
-		for (int i = pLowerLimit; i < pUpperLimit; i++)
-		{
-			//output the contents of the vector to the HWND handler
-			ImgCnt = g_FileNames[i] + L"\n";
-		}
-		g_Lock.unlock();
+		//output the contents of the vector to the HWND handler
+		ImgCnt = g_FileNames[i] + L"\n";
 	}
-	if (g_FileNames == g_vecSoundFileNames) //check if sounds have been loaded
-	{
-		g_Lock.lock();
-		for (int i = pLowerLimit; i < pUpperLimit; i++)
-		{
-			//output the contents of the vector to the HWND handler
-			SndCnt = g_FileNames[i] + L"\n";
-		}
-		g_Lock.unlock();
-	}
+	g_Lock.unlock();
 }
 
 void verifyThreads(vector<wstring> g_FileNames)
@@ -313,7 +300,7 @@ LRESULT CALLBACK WindowProc(HWND _hwnd, UINT _uiMsg, WPARAM _wparam, LPARAM _lpa
 				ImageLoadTime = ImgCnt.c_str();
 
 				//																			posX, posY, width, height
-				_hwnd = CreateWindow(L"STATIC", ImageLoadTime, WS_VISIBLE | WS_CHILD | WS_BORDER, 20, 20, 600, 250, _hwnd, NULL, NULL, NULL);
+				_hwnd = CreateWindow(L"STATIC", ImageLoadTime, WS_VISIBLE | WS_CHILD | WS_BORDER, 20, 20, 600, 100, _hwnd, NULL, NULL, NULL);
 
 			}
 			else
@@ -353,11 +340,11 @@ LRESULT CALLBACK WindowProc(HWND _hwnd, UINT _uiMsg, WPARAM _wparam, LPARAM _lpa
 				std::wstring OutTime = L"\n";
 				OutTime += std::to_wstring(SoundLoadDuration.count());
 				OutTime += L" ms to load sounds";
-				SndCnt += OutTime;
+				ImgCnt += OutTime;
 				SoundLoadTime = ImgCnt.c_str();
 
 				//																			posX, posY, width, height
-				_hwnd = CreateWindow(L"STATIC", SoundLoadTime, WS_VISIBLE | WS_CHILD | WS_BORDER, 20, 20, 600, 250, _hwnd, NULL, NULL, NULL);
+				_hwnd = CreateWindow(L"STATIC", SoundLoadTime, WS_VISIBLE | WS_CHILD | WS_BORDER, 20, 150, 600, 100, _hwnd, NULL, NULL, NULL);
 			}
 			else
 			{
