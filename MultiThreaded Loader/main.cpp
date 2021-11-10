@@ -1,11 +1,15 @@
 
 #include <Windows.h>
 #include <vector>
+#include <thread>
 #include <string>
 #include <mutex>
 #include "resource.h"
 #include "ThreadPool.h"
+#include <iostream>
 
+using std::cout;
+using std::thread;
 using std::vector;
 using std::wstring;
 using std::mutex;
@@ -229,6 +233,16 @@ LRESULT CALLBACK WindowProc(HWND _hwnd, UINT _uiMsg, WPARAM _wparam, LPARAM _lpa
 				{
 					MessageBox(_hwnd, L" Multiple Images Selected", L"Notification", MB_DEFBUTTON4);
 				}
+				if (g_vecImageFileNames.size() > MAX_FILES_TO_OPEN)
+				{
+					g_vecImageFileNames.resize(MAX_FILES_TO_OPEN);
+				}
+
+
+				for (int i = 0; i < g_vecImageFileNames.size(); i++)
+				{
+
+				}
 
 				/*auto ImageLoadStop = std::chrono::high_resolution_clock::now();
 				auto ImageLoadTime = std::chrono::duration_cast<std::chrono::milliseconds>(ImageLoadStart - ImageLoadStop);*/
@@ -317,6 +331,37 @@ HWND CreateAndRegisterWindow(HINSTANCE _hInstance)
 		NULL);                  // Extra creation parameters.
 
 	return hwnd;
+}
+
+std::mutex dataLock;
+void count(const int pLowerLimit, const int pUpperLimit)
+{
+	for (int i = pLowerLimit; i < pUpperLimit; i++)
+	{
+		cout << i << "\n";
+	}
+	//dataLock.lock();
+	//dataLock.unlock();
+}
+
+void countThr()
+{
+	const int THREAD_COUNT = 10;
+	int numberCount = 100;
+	thread* myThreads = new thread[THREAD_COUNT];
+	int lowLimit = 0;
+	int upperLimit = THREAD_COUNT;
+	for (int i = 0; i < THREAD_COUNT; i++)
+	{
+		*myThreads = thread(count, lowLimit, upperLimit);
+		myThreads->join();
+		myThreads++;
+		//auto lowerUpperLimit = []{
+		//  //lowLimit = 10;//};
+		lowLimit += THREAD_COUNT;
+		upperLimit += THREAD_COUNT;
+	}
+	delete[] myThreads;
 }
 
 int WINAPI WinMain(HINSTANCE _hInstance, HINSTANCE _hPrevInstance, LPSTR _lpCmdLine, int _nCmdShow)
