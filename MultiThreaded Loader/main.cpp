@@ -23,8 +23,7 @@ vector<wstring> g_vecImageFileNames;
 vector<wstring> g_vecSoundFileNames;
 vector<HWND> ImageWindows;
 
-vector<int> threads;
-int countFactor;
+int threads;
 
 HINSTANCE g_hInstance;
 bool g_bIsFileLoaded = false;
@@ -344,28 +343,44 @@ void count(const int pLowerLimit, const int pUpperLimit)
 	//dataLock.unlock();
 }
 
-void count(const int pLowerLimit, const int pUpperLimit)
-{
-	g_Lock.lock();
-	for (int i = pLowerLimit; i < pUpperLimit; i++)
-	{
-		cout << imageFiles[i] << "\n";
-	}
-	g_Lock.unlock();
-}
+//void count(const int pLowerLimit, const int pUpperLimit, vector<wstring> g_FileNames)
+//{
+//	g_Lock.lock();
+//	for (int i = pLowerLimit; i < pUpperLimit; i++)
+//	{
+//		cout << g_FileNames[i] << "\n";
+//	}
+//	g_Lock.unlock();
+//}
 
-void countThr()
+//takes in imageFileNames or soundFileNames and processes into threads
+void countThr(vector<wstring> g_FileNames)
 {
 	int maxNum = 50;
-	for (int i = 2; i < maxNum; i++) //avoid dividing the number by 1, continue up from 2
-		//if the remainder of a number divided by the thread size is 0
-		//also making sure it doesn't divide by itself
-		if (imageFiles.size() % i == 0 && i != imageFiles.size())
+	if (imageFiles.size() % 2 == 0) //the number is even
+		for (int i = 2; i < maxNum; i++) //avoid dividing the number by 1, continue up from 2
 		{
-			threads = i;
+			//if the remainder of a number divided by the thread size is 0
+			//also making sure it doesn't divide by itself, or by 2
+			if (imageFiles.size() % i == 0 && i != imageFiles.size() && i != imageFiles.size() / 2)
+			{
+				threads = i;
+				cout << threads << "\n\n";
+			}
 		}
-	/*else
-		threads = imageFiles.size();*/
+	else if (imageFiles.size() % 2 > 0) //if the number is odd
+		for (int i = 1; i < maxNum; i++) //start from 1
+		{
+			//if the remainder of a number divided by the thread size is 0
+			//also making sure it doesn't divide by itself, or by 2
+			if (imageFiles.size() % i == 0 && i != imageFiles.size() && i != imageFiles.size() / 2)
+			{
+				threads = i;
+				cout << threads << "\n\n";
+			}
+		}
+
+	cout << "\n\n";
 
 	int THREAD_COUNT = threads; //find the best number divided by the vector size
 	//cout << "There are " << THREAD_COUNT << " files per thread count\n";
