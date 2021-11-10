@@ -183,7 +183,6 @@ void verifyThreads(vector<wstring> g_FileNames)
 			if (g_FileNames.size() % i == 0 && i != g_FileNames.size() && i != g_FileNames.size() / 2)
 			{
 				threads = i;
-				cout << threads << "\n\n";
 			}
 		}
 	else if (g_FileNames.size() % 2 > 0) //if the number is odd
@@ -194,7 +193,6 @@ void verifyThreads(vector<wstring> g_FileNames)
 			if (g_FileNames.size() % i == 0 && i != g_FileNames.size() && i != g_FileNames.size() / 2)
 			{
 				threads = i;
-				cout << threads << "\n\n";
 			}
 		}
 }
@@ -221,7 +219,6 @@ void countThr(vector<wstring> g_FileNames)
 	for (int i = 0; i < THREAD_COUNT; i++) //from 0 to 5
 	{
 		*myThreads = thread(count, lowLimit, upperLimit, g_FileNames); //from [0] to [1]
-		cout << "\n\n";
 		myThreads->join();
 
 		//move onto the next thread
